@@ -55,7 +55,10 @@ def _clean_records(df: pd.DataFrame, session_id: str) -> list[dict]:
     for record in records:
         cleaned = {"session_id": session_id}
         for key, value in record.items():
-            cleaned[key] = _clean_value(value)
+            if key in INTEGER_ID_COLUMNS:
+                cleaned[key] = None if pd.isna(value) else int(value)
+            else:
+                cleaned[key] = _clean_value(value)
         cleaned_records.append(cleaned)
     return cleaned_records
 
