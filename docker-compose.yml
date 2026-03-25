@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      ANALYSIS_API_URL: http://analysis-api:8080
+      ANALYSIS_API_TOKEN: ${ANALYSIS_API_TOKEN}
+      SESSION_ZIPS_BUCKET: ${SESSION_ZIPS_BUCKET:-session-zips}
+      SESSION_EXPORTS_BUCKET: ${SESSION_EXPORTS_BUCKET:-session-exports}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - analysis-api
+
+  analysis-api:
+    build:
+      context: ./services/analysis
+      dockerfile: Dockerfile
+    command: uvicorn analysis_service.api.main:app --host 0.0.0.0 --port 8080
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      ANALYSIS_API_TOKEN: ${ANALYSIS_API_TOKEN}
+      SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      SUPABASE_STORAGE_BUCKET: ${SESSION_ZIPS_BUCKET:-session-zips}
+      SUPABASE_EXPORTS_BUCKET: ${SESSION_EXPORTS_BUCKET:-session-exports}
+      REDIS_URL: redis://redis:6379/0
+      REDIS_QUEUE_NAME: analysis:jobs
+    depends_on:
+      - redis
+    ports:
+      - "8080:8080"
+
+  analysis-worker:
+    build:
+      context: ./services/analysis
+      dockerfile: Dockerfile
+    command: python -m analysis_service.worker.main
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      ANALYSIS_API_TOKEN: ${ANALYSIS_API_TOKEN}
+      SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      SUPABASE_STORAGE_BUCKET: ${SESSION_ZIPS_BUCKET:-session-zips}
+      SUPABASE_EXPORTS_BUCKET: ${SESSION_EXPORTS_BUCKET:-session-exports}
+      REDIS_URL: redis://redis:6379/0
+      REDIS_QUEUE_NAME: analysis:jobs
+      WORK_ROOT: /tmp/running-analysis
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
