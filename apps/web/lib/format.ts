@@ -1,5 +1,5 @@
 export function fmt(value: number | null | undefined, digits = 1) {
-  if (value === null || value === undefined || Number.isNaN(value)) return "n/d";
+  if (value === null || value === undefined || !Number.isFinite(value)) return "n/d";
   return value.toFixed(digits);
 }
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import shutil
 import tempfile
 import zipfile
@@ -49,9 +50,27 @@ def _clean_records(df: pd.DataFrame, session_id: str) -> list[dict]:
     safe = df.copy()
     for column in INTEGER_ID_COLUMNS.intersection(safe.columns):
         safe[column] = safe[column].apply(lambda value: None if pd.isna(value) else int(value))
-    safe = safe.where(pd.notnull(safe), None)
+    safe = safe.apply(lambda column: column.map(_clean_value))
     safe.insert(0, "session_id", session_id)
     return safe.to_dict(orient="records")
+
+
+def _clean_value(value):
+    if value is None:
+        return None
+    if hasattr(value, "item"):
+        value = value.item()
+    if pd.isna(value):
+        return None
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, int):
+        return value
+    return value
+
+
+def _clean_summary(summary: dict) -> dict:
+    return {key: _clean_value(value) for key, value in summary.items()}
 
 
 def process_session(session_id: str) -> dict:
@@ -76,7 +95,8 @@ def process_session(session_id: str) -> dict:
 
         save_summary(
             session_id,
-            {
+            _clean_summary(
+                {
                 "duration_s": analysis.summary.get("duration_s"),
                 "distance_m": analysis.summary.get("distance_m"),
                 "moving_time_s": analysis.summary.get("moving_time_s"),
@@ -109,7 +129,8 @@ def process_session(session_id: str) -> dict:
                 "best_sprint_phase_sequence": (
                     analysis.sprints.iloc[0]["phase_sequence"] if not analysis.sprints.empty else None
                 ),
-            },
+                },
+            ),
         )
 
         replace_rows("session_sprints", session_id, _clean_records(analysis.sprints, session_id))
