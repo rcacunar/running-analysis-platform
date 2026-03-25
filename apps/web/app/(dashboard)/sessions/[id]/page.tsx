@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { fmt, statusLabel } from "@/lib/format";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { SessionActionButtons } from "@/components/session-action-buttons";
+import { SessionStatusWatcher } from "@/components/session-status-watcher";
 import { SessionVisuals } from "@/components/session-visuals";
 
 const EXPORT_META: Record<string, { label: string; description: string }> = {
@@ -54,6 +55,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   return (
     <>
       <section className="surface card">
+        <SessionStatusWatcher sessionId={session.id} status={session.status} />
         <div className="session-meta">
           <div>
             <p className="eyebrow">Detalle</p>
@@ -210,6 +212,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         </>
       ) : (
         <section className="surface card">
+          <SessionStatusWatcher sessionId={session.id} status={session.status} />
           <p className="eyebrow">Estado</p>
           <h2>Aún no hay resultados finales</h2>
           <p className="muted">

@@ -16,7 +16,7 @@ async function getOwnedSession(sessionId: string) {
 
   const { data: session, error: sessionError } = await admin
     .from("sessions")
-    .select("id, user_id, upload_bucket, upload_path")
+    .select("id, user_id, upload_bucket, upload_path, status, error_message, updated_at, finished_at")
     .eq("id", sessionId)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -67,4 +67,21 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   }
 
   return NextResponse.json({ ok: true });
+}
+
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const owned = await getOwnedSession(id);
+  if ("error" in owned) {
+    return owned.error;
+  }
+
+  const { session } = owned;
+  return NextResponse.json({
+    id: session.id,
+    status: session.status,
+    error_message: session.error_message ?? null,
+    updated_at: session.updated_at ?? null,
+    finished_at: session.finished_at ?? null
+  });
 }
