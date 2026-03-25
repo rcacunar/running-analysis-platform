@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { fmt, statusLabel } from "@/lib/format";
+import { SessionActionButtons } from "@/components/session-action-buttons";
 import { SessionVisuals } from "@/components/session-visuals";
 
 export default async function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -56,6 +57,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           <Link href={`/compare?ids=${session.id}`} className="button-secondary">
             Comparar esta sesión
           </Link>
+          <SessionActionButtons sessionId={session.id} status={session.status} redirectOnDelete="/sessions" />
           {(exports ?? []).map((asset) => (
             <span key={asset.id} className="muted">
               {asset.kind}

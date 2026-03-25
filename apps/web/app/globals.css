@@ -40,6 +40,11 @@ select {
   font: inherit;
 }
 
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .shell {
   width: min(1240px, calc(100% - 32px));
   margin: 0 auto;

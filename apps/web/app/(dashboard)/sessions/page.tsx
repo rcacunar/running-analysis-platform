@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { fmt, statusLabel } from "@/lib/format";
+import { SessionActionButtons } from "@/components/session-action-buttons";
 import { SessionUploadForm } from "@/components/session-upload-form";
 import type { SessionRow, SummaryRow } from "@/lib/types";
 
@@ -66,6 +67,7 @@ export default async function SessionsPage() {
                     Comparar
                   </Link>
                 </div>
+                <SessionActionButtons sessionId={session.id} status={session.status} />
               </article>
             );
           })}
