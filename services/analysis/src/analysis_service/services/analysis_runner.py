@@ -50,9 +50,14 @@ def _clean_records(df: pd.DataFrame, session_id: str) -> list[dict]:
     safe = df.copy()
     for column in INTEGER_ID_COLUMNS.intersection(safe.columns):
         safe[column] = safe[column].apply(lambda value: None if pd.isna(value) else int(value))
-    safe = safe.apply(lambda column: column.map(_clean_value))
-    safe.insert(0, "session_id", session_id)
-    return safe.to_dict(orient="records")
+    records = safe.to_dict(orient="records")
+    cleaned_records: list[dict] = []
+    for record in records:
+        cleaned = {"session_id": session_id}
+        for key, value in record.items():
+            cleaned[key] = _clean_value(value)
+        cleaned_records.append(cleaned)
+    return cleaned_records
 
 
 def _clean_value(value):
