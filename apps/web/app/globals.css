@@ -291,6 +291,13 @@ th {
   min-height: 250px;
 }
 
+.sticky-playback-bar {
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.94);
+}
+
 .visual-stack {
   display: grid;
   gap: 26px;
@@ -322,6 +329,11 @@ th {
 .playback-controls {
   display: grid;
   gap: 14px;
+}
+
+.playback-controls select,
+.playback-controls button {
+  width: fit-content;
 }
 
 .playback-controls input[type="range"] {

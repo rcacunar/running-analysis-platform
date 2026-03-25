@@ -11,6 +11,14 @@ type Point = {
   speed_accel_mps2?: number | null;
   impact_peak_mps2?: number | null;
   jerk_rms_mps3?: number | null;
+  horizontal_rms_mps2?: number | null;
+  vertical_rms_mps2?: number | null;
+  gyro_rms_rads?: number | null;
+  orientation_rate_rads?: number | null;
+  gps_accel_mps2?: number | null;
+  gps_quality_score?: number | null;
+  horizontal_accuracy_m?: number | null;
+  effort_raw?: number | null;
   phase?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -86,6 +94,7 @@ export function SessionVisuals({
   const [frame, setFrame] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [rate, setRate] = useState(1);
+  const [timeRange, setTimeRange] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     if (!playing || playback.length === 0) return;
@@ -125,9 +134,34 @@ export function SessionVisuals({
     ];
   }
 
+  function handleTimelineRelayout(event: Record<string, unknown>) {
+    const start = event["xaxis.range[0]"];
+    const end = event["xaxis.range[1]"];
+    const autorange = event["xaxis.autorange"];
+    if (autorange) {
+      setTimeRange(null);
+      return;
+    }
+    if (typeof start === "number" && typeof end === "number") {
+      setTimeRange([start, end]);
+      return;
+    }
+    if (typeof start === "string" && typeof end === "string") {
+      const parsedStart = Number(start);
+      const parsedEnd = Number(end);
+      if (Number.isFinite(parsedStart) && Number.isFinite(parsedEnd)) {
+        setTimeRange([parsedStart, parsedEnd]);
+      }
+    }
+  }
+
+  function sharedTimeAxis() {
+    return timeRange ? { title: "Tiempo (s)", range: timeRange } : { title: "Tiempo (s)" };
+  }
+
   return (
     <div className="visual-stack">
-      <section className="surface card">
+      <section className="surface card sticky-playback-bar">
         <p className="eyebrow">Control Global</p>
         <h2 style={{ marginBottom: 12 }}>Playback sincronizado de toda la sesión</h2>
         <div className="playback-controls">
@@ -191,12 +225,13 @@ export function SessionVisuals({
               margin: { l: 50, r: 60, t: 12, b: 40 },
               paper_bgcolor: "white",
               plot_bgcolor: "white",
-              xaxis: { title: "Tiempo (s)" },
+              xaxis: sharedTimeAxis(),
               yaxis: { title: "km/h" },
               yaxis2: { title: "m/s2", overlaying: "y", side: "right" },
               shapes: timelineShapes()
             }}
             config={{ responsive: true, displaylogo: false }}
+            onRelayout={handleTimelineRelayout}
             style={{ width: "100%", height: "100%" }}
           />
         </div>
@@ -236,12 +271,13 @@ export function SessionVisuals({
               margin: { l: 50, r: 60, t: 12, b: 40 },
               paper_bgcolor: "white",
               plot_bgcolor: "white",
-              xaxis: { title: "Tiempo (s)" },
+              xaxis: sharedTimeAxis(),
               yaxis: { title: "Esfuerzo", range: [0, 100] },
               yaxis2: { title: "spm", overlaying: "y", side: "right" },
               shapes: timelineShapes()
             }}
             config={{ responsive: true, displaylogo: false }}
+            onRelayout={handleTimelineRelayout}
             style={{ width: "100%", height: "100%" }}
           />
         </div>
@@ -281,12 +317,161 @@ export function SessionVisuals({
               margin: { l: 50, r: 60, t: 12, b: 40 },
               paper_bgcolor: "white",
               plot_bgcolor: "white",
-              xaxis: { title: "Tiempo (s)" },
+              xaxis: sharedTimeAxis(),
               yaxis: { title: "m/s2" },
               yaxis2: { title: "m/s3", overlaying: "y", side: "right" },
               shapes: timelineShapes()
             }}
             config={{ responsive: true, displaylogo: false }}
+            onRelayout={handleTimelineRelayout}
+            style={{ width: "100%", height: "100%" }}
+          />
+        </div>
+      </section>
+
+      <section className="chart-section">
+        <div className="chart-heading">
+          <div>
+            <p className="eyebrow">Estabilidad</p>
+            <h2>Oscilación horizontal y vertical</h2>
+          </div>
+        </div>
+        <div className="chart-shell chart-shell-wide">
+          <Plot
+            data={[
+              {
+                x: times,
+                y: features.map((row) => row.horizontal_rms_mps2),
+                type: "scatter",
+                mode: "lines",
+                name: "Horizontal RMS",
+                line: { color: "#3949ab", width: 2.5 }
+              },
+              {
+                x: times,
+                y: features.map((row) => row.vertical_rms_mps2),
+                type: "scatter",
+                mode: "lines",
+                name: "Vertical RMS",
+                line: { color: "#00897b", width: 2.5 },
+                yaxis: "y2"
+              }
+            ]}
+            layout={{
+              autosize: true,
+              height: 320,
+              margin: { l: 50, r: 60, t: 12, b: 40 },
+              paper_bgcolor: "white",
+              plot_bgcolor: "white",
+              xaxis: sharedTimeAxis(),
+              yaxis: { title: "m/s2" },
+              yaxis2: { title: "m/s2", overlaying: "y", side: "right" },
+              shapes: timelineShapes()
+            }}
+            config={{ responsive: true, displaylogo: false }}
+            onRelayout={handleTimelineRelayout}
+            style={{ width: "100%", height: "100%" }}
+          />
+        </div>
+      </section>
+
+      <section className="chart-section">
+        <div className="chart-heading">
+          <div>
+            <p className="eyebrow">Rotación</p>
+            <h2>Giroscopio y tasa de orientación</h2>
+          </div>
+        </div>
+        <div className="chart-shell chart-shell-wide">
+          <Plot
+            data={[
+              {
+                x: times,
+                y: features.map((row) => row.gyro_rms_rads),
+                type: "scatter",
+                mode: "lines",
+                name: "Gyro RMS",
+                line: { color: "#8e24aa", width: 2.5 }
+              },
+              {
+                x: times,
+                y: features.map((row) => row.orientation_rate_rads),
+                type: "scatter",
+                mode: "lines",
+                name: "Orientation rate",
+                line: { color: "#f4511e", width: 2.5 },
+                yaxis: "y2"
+              }
+            ]}
+            layout={{
+              autosize: true,
+              height: 320,
+              margin: { l: 50, r: 60, t: 12, b: 40 },
+              paper_bgcolor: "white",
+              plot_bgcolor: "white",
+              xaxis: sharedTimeAxis(),
+              yaxis: { title: "rad/s" },
+              yaxis2: { title: "rad/s", overlaying: "y", side: "right" },
+              shapes: timelineShapes()
+            }}
+            config={{ responsive: true, displaylogo: false }}
+            onRelayout={handleTimelineRelayout}
+            style={{ width: "100%", height: "100%" }}
+          />
+        </div>
+      </section>
+
+      <section className="chart-section">
+        <div className="chart-heading">
+          <div>
+            <p className="eyebrow">Señal GPS</p>
+            <h2>Calidad GPS, precisión y aceleración derivada</h2>
+          </div>
+        </div>
+        <div className="chart-shell chart-shell-wide">
+          <Plot
+            data={[
+              {
+                x: times,
+                y: features.map((row) => row.gps_quality_score),
+                type: "scatter",
+                mode: "lines",
+                name: "GPS quality",
+                line: { color: "#2e7d32", width: 2.5 }
+              },
+              {
+                x: times,
+                y: features.map((row) => row.horizontal_accuracy_m),
+                type: "scatter",
+                mode: "lines",
+                name: "Precisión horizontal",
+                line: { color: "#c62828", width: 2.5 },
+                yaxis: "y2"
+              },
+              {
+                x: times,
+                y: features.map((row) => row.gps_accel_mps2),
+                type: "scatter",
+                mode: "lines",
+                name: "GPS accel",
+                line: { color: "#0277bd", width: 2 },
+                yaxis: "y3"
+              }
+            ]}
+            layout={{
+              autosize: true,
+              height: 340,
+              margin: { l: 50, r: 80, t: 12, b: 40 },
+              paper_bgcolor: "white",
+              plot_bgcolor: "white",
+              xaxis: sharedTimeAxis(),
+              yaxis: { title: "score" },
+              yaxis2: { title: "m", overlaying: "y", side: "right" },
+              yaxis3: { title: "m/s2", anchor: "free", overlaying: "y", side: "right", position: 0.96 },
+              shapes: timelineShapes()
+            }}
+            config={{ responsive: true, displaylogo: false }}
+            onRelayout={handleTimelineRelayout}
             style={{ width: "100%", height: "100%" }}
           />
         </div>
@@ -326,12 +511,13 @@ export function SessionVisuals({
               margin: { l: 50, r: 60, t: 12, b: 40 },
               paper_bgcolor: "white",
               plot_bgcolor: "white",
-              xaxis: { title: "Tiempo (s)" },
+              xaxis: sharedTimeAxis(),
               yaxis: { title: "m" },
               yaxis2: { title: "km/h", overlaying: "y", side: "right" },
               shapes: timelineShapes()
             }}
             config={{ responsive: true, displaylogo: false }}
+            onRelayout={handleTimelineRelayout}
             style={{ width: "100%", height: "100%" }}
           />
         </div>
@@ -358,7 +544,7 @@ export function SessionVisuals({
               margin: { l: 50, r: 80, t: 12, b: 40 },
               paper_bgcolor: "white",
               plot_bgcolor: "white",
-              xaxis: { title: "Tiempo (s)" },
+              xaxis: sharedTimeAxis(),
               yaxis: { title: "km/h" },
               yaxis2: { title: "Esfuerzo", overlaying: "y", side: "right", range: [0, 100] },
               yaxis3: { title: "m/s2", anchor: "free", overlaying: "y", side: "left", position: 0.04 },
@@ -366,6 +552,7 @@ export function SessionVisuals({
               shapes: timelineShapes()
             }}
             config={{ responsive: true, displaylogo: false }}
+            onRelayout={handleTimelineRelayout}
             style={{ width: "100%", height: "100%" }}
           />
         </div>

@@ -150,15 +150,24 @@ def process_session(session_id: str) -> dict:
                 "t_center",
                 "speed_kmh",
                 "effort_score",
+                "effort_raw",
                 "cadence_spm",
                 "speed_accel_mps2",
                 "impact_peak_mps2",
                 "jerk_rms_mps3",
+                "horizontal_rms_mps2",
+                "vertical_rms_mps2",
+                "gyro_rms_rads",
+                "orientation_rate_rads",
+                "gps_accel_mps2",
+                "gps_quality_score",
+                "horizontalAccuracy",
                 "phase",
                 "sprint_id",
                 "bout_id",
             ]
         ].copy()
+        feature_subset = feature_subset.rename(columns={"horizontalAccuracy": "horizontal_accuracy_m"})
         replace_rows("session_feature_points", session_id, _clean_records(feature_subset, session_id))
 
         export_rows: list[dict] = []
