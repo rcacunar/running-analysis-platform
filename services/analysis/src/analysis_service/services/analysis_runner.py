@@ -23,6 +23,7 @@ from analysis_service.services.session_store import (
 
 
 REQUIRED_FILES = {"Accelerometer.csv", "Gyroscope.csv"}
+INTEGER_ID_COLUMNS = {"sprint_id", "bout_id"}
 
 
 def detect_session_folder(root: Path) -> Path:
@@ -45,7 +46,10 @@ def detect_session_folder(root: Path) -> Path:
 def _clean_records(df: pd.DataFrame, session_id: str) -> list[dict]:
     if df.empty:
         return []
-    safe = df.where(pd.notnull(df), None).copy()
+    safe = df.copy()
+    for column in INTEGER_ID_COLUMNS.intersection(safe.columns):
+        safe[column] = safe[column].apply(lambda value: None if pd.isna(value) else int(value))
+    safe = safe.where(pd.notnull(safe), None)
     safe.insert(0, "session_id", session_id)
     return safe.to_dict(orient="records")
 
