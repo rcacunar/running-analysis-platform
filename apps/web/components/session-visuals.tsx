@@ -109,106 +109,235 @@ export function SessionVisuals({
       : route.length - 1;
 
   return (
-    <div className="grid-2">
+    <div className="page-grid">
+      <div className="grid-2">
+        <section className="surface card">
+          <p className="eyebrow">Velocidad</p>
+          <h2 style={{ marginBottom: 18 }}>Velocidad y aceleración del pique</h2>
+          <div className="chart-shell">
+            <Plot
+              data={[
+                {
+                  x: times,
+                  y: features.map((row) => row.speed_kmh),
+                  type: "scatter",
+                  mode: "lines",
+                  name: "Velocidad",
+                  line: { color: "#1565c0", width: 3 }
+                },
+                {
+                  x: times,
+                  y: features.map((row) => row.speed_accel_mps2),
+                  type: "scatter",
+                  mode: "lines",
+                  name: "Aceleración",
+                  line: { color: "#43a047", width: 2 },
+                  yaxis: "y2"
+                }
+              ]}
+              layout={{
+                autosize: true,
+                height: 360,
+                margin: { l: 50, r: 50, t: 20, b: 40 },
+                paper_bgcolor: "white",
+                plot_bgcolor: "white",
+                xaxis: { title: "Tiempo (s)" },
+                yaxis: { title: "km/h" },
+                yaxis2: { title: "m/s2", overlaying: "y", side: "right" },
+                shapes: [...phaseShapes, ...sprintShapes]
+              }}
+              config={{ responsive: true, displaylogo: false }}
+              style={{ width: "100%", height: "100%" }}
+            />
+          </div>
+        </section>
+
+        <section className="surface card">
+          <p className="eyebrow">Esfuerzo</p>
+          <h2 style={{ marginBottom: 18 }}>Esfuerzo y cadencia</h2>
+          <div className="chart-shell">
+            <Plot
+              data={[
+                {
+                  x: times,
+                  y: features.map((row) => row.effort_score),
+                  type: "scatter",
+                  mode: "lines",
+                  name: "Esfuerzo",
+                  line: { color: "#d81b60", width: 3 }
+                },
+                {
+                  x: times,
+                  y: features.map((row) => row.cadence_spm),
+                  type: "scatter",
+                  mode: "lines",
+                  name: "Cadencia",
+                  line: { color: "#ef6c00", width: 2 },
+                  yaxis: "y2"
+                }
+              ]}
+              layout={{
+                autosize: true,
+                height: 360,
+                margin: { l: 50, r: 50, t: 20, b: 40 },
+                paper_bgcolor: "white",
+                plot_bgcolor: "white",
+                xaxis: { title: "Tiempo (s)" },
+                yaxis: { title: "Esfuerzo", range: [0, 100] },
+                yaxis2: { title: "spm", overlaying: "y", side: "right" },
+                shapes: [...phaseShapes, ...sprintShapes]
+              }}
+              config={{ responsive: true, displaylogo: false }}
+              style={{ width: "100%", height: "100%" }}
+            />
+          </div>
+        </section>
+      </div>
+
+      <div className="grid-2">
+        <section className="surface card">
+          <p className="eyebrow">Biomecánica</p>
+          <h2 style={{ marginBottom: 18 }}>Impacto y jerk</h2>
+          <div className="chart-shell">
+            <Plot
+              data={[
+                {
+                  x: times,
+                  y: features.map((row) => row.impact_peak_mps2),
+                  type: "scatter",
+                  mode: "lines",
+                  name: "Impacto pico",
+                  line: { color: "#6a1b9a", width: 2.5 }
+                },
+                {
+                  x: times,
+                  y: features.map((row) => row.jerk_rms_mps3),
+                  type: "scatter",
+                  mode: "lines",
+                  name: "Jerk RMS",
+                  line: { color: "#00838f", width: 2.5 },
+                  yaxis: "y2"
+                }
+              ]}
+              layout={{
+                autosize: true,
+                height: 360,
+                margin: { l: 50, r: 50, t: 20, b: 40 },
+                paper_bgcolor: "white",
+                plot_bgcolor: "white",
+                xaxis: { title: "Tiempo (s)" },
+                yaxis: { title: "m/s2" },
+                yaxis2: { title: "m/s3", overlaying: "y", side: "right" },
+                shapes: [...phaseShapes, ...sprintShapes]
+              }}
+              config={{ responsive: true, displaylogo: false }}
+              style={{ width: "100%", height: "100%" }}
+            />
+          </div>
+        </section>
+
+        <section className="surface card">
+          <p className="eyebrow">Playback</p>
+          <h2 style={{ marginBottom: 18 }}>Ruta y esfuerzo sincronizados</h2>
+          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
+            <button className="button-secondary" onClick={() => setPlaying((value) => !value)}>
+              {playing ? "Pause" : "Play"}
+            </button>
+            <select value={rate} onChange={(event) => setRate(Number(event.target.value))}>
+              <option value={0.5}>0.5x</option>
+              <option value={1}>1x</option>
+              <option value={2}>2x</option>
+              <option value={4}>4x</option>
+            </select>
+            <input
+              type="range"
+              min={0}
+              max={Math.max(0, playback.length - 1)}
+              value={Math.floor(frame)}
+              onChange={(event) => setFrame(Number(event.target.value))}
+              style={{ flex: 1 }}
+            />
+            <span className="muted">
+              t={current?.t_center?.toFixed(1) ?? "n/d"}s | vel={current?.speed_kmh?.toFixed(1) ?? "n/d"} km/h | fase={current?.phase ?? "n/d"}
+            </span>
+          </div>
+          <div className="playback-panel">
+            <Plot
+              data={[
+                {
+                  x: route.map((row) => row.longitude),
+                  y: route.map((row) => row.latitude),
+                  type: "scatter",
+                  mode: "lines",
+                  name: "Ruta",
+                  line: { color: "rgba(120,120,120,0.55)", width: 2 }
+                },
+                {
+                  x: route.slice(0, currentRouteIndex + 1).map((row) => row.longitude),
+                  y: route.slice(0, currentRouteIndex + 1).map((row) => row.latitude),
+                  type: "scatter",
+                  mode: "markers+lines",
+                  name: "Trail",
+                  marker: {
+                    size: 9,
+                    color: route.slice(0, currentRouteIndex + 1).map((row) => row.effort_score),
+                    colorscale: "Turbo",
+                    cmin: 0,
+                    cmax: 100,
+                    line: { color: "#fff", width: 0.5 }
+                  },
+                  line: { color: "rgba(216,27,96,0.65)", width: 2 }
+                },
+                currentRouteIndex >= 0
+                  ? {
+                      x: [route[currentRouteIndex]?.longitude],
+                      y: [route[currentRouteIndex]?.latitude],
+                      type: "scatter",
+                      mode: "markers",
+                      name: "Actual",
+                      marker: { size: 16, color: "#ffeb3b", line: { color: "#111", width: 1.2 } }
+                    }
+                  : null
+              ].filter(Boolean)}
+              layout={{
+                autosize: true,
+                height: 420,
+                margin: { l: 50, r: 20, t: 20, b: 40 },
+                paper_bgcolor: "white",
+                plot_bgcolor: "white",
+                xaxis: { title: "Longitud" },
+                yaxis: { title: "Latitud", scaleanchor: "x", scaleratio: 1 }
+              }}
+              config={{ responsive: true, displaylogo: false }}
+              style={{ width: "100%", height: "100%" }}
+            />
+          </div>
+        </section>
+      </div>
+
       <section className="surface card">
-        <p className="eyebrow">Series</p>
-        <h2 style={{ marginBottom: 18 }}>Velocidad, esfuerzo y biomecánica</h2>
+        <p className="eyebrow">Lectura Integrada</p>
+        <h2 style={{ marginBottom: 18 }}>Vista combinada de la sesión</h2>
         <div className="chart-shell">
           <Plot
             data={[
               { x: times, y: features.map((row) => row.speed_kmh), type: "scatter", mode: "lines", name: "Velocidad", line: { color: "#1565c0" } },
               { x: times, y: features.map((row) => row.effort_score), type: "scatter", mode: "lines", name: "Esfuerzo", line: { color: "#d81b60" }, yaxis: "y2" },
-              { x: times, y: features.map((row) => row.speed_accel_mps2), type: "scatter", mode: "lines", name: "Aceleración", line: { color: "#43a047" }, yaxis: "y3" }
+              { x: times, y: features.map((row) => row.speed_accel_mps2), type: "scatter", mode: "lines", name: "Aceleración", line: { color: "#43a047" }, yaxis: "y3" },
+              { x: times, y: features.map((row) => row.cadence_spm), type: "scatter", mode: "lines", name: "Cadencia", line: { color: "#ef6c00" }, yaxis: "y4" }
             ]}
             layout={{
               autosize: true,
               height: 420,
-              margin: { l: 50, r: 50, t: 20, b: 40 },
+              margin: { l: 50, r: 80, t: 20, b: 40 },
               paper_bgcolor: "white",
               plot_bgcolor: "white",
               xaxis: { title: "Tiempo (s)" },
               yaxis: { title: "km/h" },
               yaxis2: { title: "Esfuerzo", overlaying: "y", side: "right", range: [0, 100] },
               yaxis3: { title: "m/s2", anchor: "free", overlaying: "y", side: "left", position: 0.06 },
+              yaxis4: { title: "spm", anchor: "free", overlaying: "y", side: "right", position: 0.96 },
               shapes: [...phaseShapes, ...sprintShapes]
-            }}
-            config={{ responsive: true, displaylogo: false }}
-            style={{ width: "100%", height: "100%" }}
-          />
-        </div>
-      </section>
-
-      <section className="surface card">
-        <p className="eyebrow">Playback</p>
-        <h2 style={{ marginBottom: 18 }}>Ruta y esfuerzo sincronizados</h2>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
-          <button className="button-secondary" onClick={() => setPlaying((value) => !value)}>
-            {playing ? "Pause" : "Play"}
-          </button>
-          <select value={rate} onChange={(event) => setRate(Number(event.target.value))}>
-            <option value={0.5}>0.5x</option>
-            <option value={1}>1x</option>
-            <option value={2}>2x</option>
-            <option value={4}>4x</option>
-          </select>
-          <input
-            type="range"
-            min={0}
-            max={Math.max(0, playback.length - 1)}
-            value={Math.floor(frame)}
-            onChange={(event) => setFrame(Number(event.target.value))}
-            style={{ flex: 1 }}
-          />
-          <span className="muted">
-            t={current?.t_center?.toFixed(1) ?? "n/d"}s | vel={current?.speed_kmh?.toFixed(1) ?? "n/d"} km/h | fase={current?.phase ?? "n/d"}
-          </span>
-        </div>
-        <div className="playback-panel">
-          <Plot
-            data={[
-              {
-                x: route.map((row) => row.longitude),
-                y: route.map((row) => row.latitude),
-                type: "scatter",
-                mode: "lines",
-                name: "Ruta",
-                line: { color: "rgba(120,120,120,0.55)", width: 2 }
-              },
-              {
-                x: route.slice(0, currentRouteIndex + 1).map((row) => row.longitude),
-                y: route.slice(0, currentRouteIndex + 1).map((row) => row.latitude),
-                type: "scatter",
-                mode: "markers+lines",
-                name: "Trail",
-                marker: {
-                  size: 9,
-                  color: route.slice(0, currentRouteIndex + 1).map((row) => row.effort_score),
-                  colorscale: "Turbo",
-                  cmin: 0,
-                  cmax: 100,
-                  line: { color: "#fff", width: 0.5 }
-                },
-                line: { color: "rgba(216,27,96,0.65)", width: 2 }
-              },
-              currentRouteIndex >= 0
-                ? {
-                    x: [route[currentRouteIndex]?.longitude],
-                    y: [route[currentRouteIndex]?.latitude],
-                    type: "scatter",
-                    mode: "markers",
-                    name: "Actual",
-                    marker: { size: 16, color: "#ffeb3b", line: { color: "#111", width: 1.2 } }
-                  }
-                : null
-            ].filter(Boolean)}
-            layout={{
-              autosize: true,
-              height: 420,
-              margin: { l: 50, r: 20, t: 20, b: 40 },
-              paper_bgcolor: "white",
-              plot_bgcolor: "white",
-              xaxis: { title: "Longitud" },
-              yaxis: { title: "Latitud", scaleanchor: "x", scaleratio: 1 }
             }}
             config={{ responsive: true, displaylogo: false }}
             style={{ width: "100%", height: "100%" }}
