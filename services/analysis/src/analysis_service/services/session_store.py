@@ -55,7 +55,7 @@ def upload_storage_file(bucket: str, storage_path: str, file_path: Path, content
         get_service_supabase().storage.from_(bucket).upload(
             storage_path,
             handle,
-            file_options={"content-type": content_type, "upsert": True},
+            file_options={"content-type": content_type, "x-upsert": "true"},
         )
 
 
