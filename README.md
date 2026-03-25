@@ -48,7 +48,8 @@ docker compose up --build
 - Crea un servicio Docker Compose apuntando a este repo.
 - Define las variables de entorno del archivo `.env.example`.
 - Conecta el dominio del frontend al servicio `web`.
-- Mantén Redis en la misma red interna del stack.
+- En Coolify, deja `web` como servicio proxied y mantén `analysis-api`, `analysis-worker` y `redis` solo en red interna.
+- Los puertos del `docker-compose.yml` están definidos como internos (`expose`), no publicados al host.
 - Supabase puede ir en otra app/stack mientras exponga URL pública o interna accesible desde estos servicios.
 
 ## Notas
