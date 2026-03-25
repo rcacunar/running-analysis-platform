@@ -1,6 +1,7 @@
-import { env } from "@/lib/env";
+import { getServerEnv } from "@/lib/env";
 
 export async function enqueueAnalysis(sessionId: string) {
+  const env = getServerEnv();
   const response = await fetch(`${env.ANALYSIS_API_URL}/v1/jobs/analyze`, {
     method: "POST",
     headers: {

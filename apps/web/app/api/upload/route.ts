@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { enqueueAnalysis } from "@/lib/analysis-api";
-import { env } from "@/lib/env";
+import { getServerEnv } from "@/lib/env";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const env = getServerEnv();
   const supabase = await createSupabaseServerClient();
   const admin = createSupabaseAdminClient();
   const { data: auth } = await supabase.auth.getUser();
