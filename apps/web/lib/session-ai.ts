@@ -2,6 +2,7 @@ import OpenAI from "openai";
 
 type AIInput = {
   sessionName: string;
+  athleteProfile: Record<string, unknown> | null;
   summary: Record<string, unknown>;
   sprints: Array<Record<string, unknown>>;
   phases: Array<Record<string, unknown>>;
@@ -39,6 +40,8 @@ export async function generateSessionAIReport(input: AIInput) {
               "Eres un analista de rendimiento para corredores jóvenes y debes traducir datos de sprint a un lenguaje que un atleta entienda rápido. " +
               "Responde en español claro, humano y directo, con tono de coach técnico, no de paper ni de dashboard. " +
               "Usa solo los datos entregados. No inventes mediciones, no inventes antecedentes clínicos y no cites estudios. " +
+              "Si existe un perfil del atleta, úsalo para dar contexto al análisis y a las recomendaciones, pero no hagas diagnóstico médico ni afirmaciones clínicas. " +
+              "Si faltan datos del perfil, continúa igual sin inventarlos y sin exagerar su importancia. " +
               "No escribas nombres internos de variables, no uses snake_case, no pegues claves del JSON y no llenes el texto con decimales innecesarios. " +
               "Redondea casi todos los valores a 1 decimal; usa más precisión solo si cambia de verdad la interpretación. " +
               "Cada vez que menciones una métrica técnica, explica en la misma frase qué significa para el cuerpo o para el rendimiento. " +

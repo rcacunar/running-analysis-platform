@@ -8,24 +8,36 @@ import type { SessionRow, SummaryRow } from "@/lib/types";
 export default async function SessionsPage() {
   const { supabase, user } = await requireUser();
 
-  const [{ data: sessions }, { data: summaries }] = await Promise.all([
+  const [{ data: sessions }, { data: summaries }, { data: profile }] = await Promise.all([
     supabase
       .from("sessions")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
-    supabase.from("session_summaries").select("*")
+    supabase.from("session_summaries").select("*"),
+    supabase
+      .from("profiles")
+      .select("age_years,weight_kg,height_cm,training_level")
+      .eq("id", user.id)
+      .maybeSingle()
   ]);
 
   const summaryBySession = new Map<string, SummaryRow>(
     (summaries ?? []).map((row) => [row.session_id, row as SummaryRow])
   );
+  const profileReady = Boolean(profile?.age_years && profile?.weight_kg && profile?.height_cm && profile?.training_level);
 
   return (
     <>
       <section className="surface card">
         <p className="eyebrow">Nueva sesión</p>
         <h2 style={{ marginBottom: 18 }}>Sube un ZIP y dispara el análisis</h2>
+        {!profileReady ? (
+          <div className="notice notice-ok" style={{ marginBottom: 18 }}>
+            Completa tu <Link href="/profile">perfil del atleta</Link> para que el análisis IA use edad, tamaño corporal y
+            nivel de entrenamiento como contexto.
+          </div>
+        ) : null}
         <SessionUploadForm />
       </section>
 

@@ -13,6 +13,23 @@ export type SessionRow = {
   error_message: string | null;
 };
 
+export type ProfileRow = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  age_years: number | null;
+  sex: "male" | "female" | "other" | "prefer_not_to_say" | null;
+  weight_kg: number | null;
+  height_cm: number | null;
+  resting_heart_rate_bpm: number | null;
+  max_heart_rate_bpm: number | null;
+  training_level: string | null;
+  primary_goal: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type SummaryRow = {
   session_id: string;
   peak_speed_kmh: number | null;

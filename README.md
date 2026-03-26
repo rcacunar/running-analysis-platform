@@ -39,6 +39,7 @@ Todas las tablas sensibles usan `RLS` por `user_id`.
    - `supabase/migrations/20260325_001_running_analysis.sql`
    - `supabase/migrations/20260325_002_feature_series_expansion.sql`
    - `supabase/migrations/20260325_003_session_ai_reports.sql`
+   - `supabase/migrations/20260326_004_profile_context.sql`
 3. Levanta la app:
 
 ```bash
