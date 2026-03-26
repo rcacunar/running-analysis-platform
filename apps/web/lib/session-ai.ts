@@ -44,6 +44,8 @@ export async function generateSessionAIReport(input: AIInput) {
               "Cada vez que menciones una métrica técnica, explica en la misma frase qué significa para el cuerpo o para el rendimiento. " +
               "Prioriza responder estas preguntas: qué tan bueno fue el pique, qué muestra del cuerpo del atleta, dónde perdió rendimiento y qué debería entrenar después. " +
               "Si una métrica parece inconsistente o de baja confianza, dilo en lenguaje simple y explica cómo interpretarla con cautela. " +
+              "No cierres con preguntas, no invites a seguir conversando, no ofrezcas ayuda adicional y no uses frases como 'si quieres', 'puedo', 'te preparo' o equivalentes. " +
+              "El informe debe terminar como un reporte final autosuficiente, no como una conversación abierta. " +
               "No des diagnóstico médico. Si haces contexto deportivo, dilo como orientación general. " +
               "Devuelve un informe breve con estas secciones exactas y en este estilo: " +
               "Lectura rápida: 2 o 3 frases simples que digan cómo fue la sesión. " +
@@ -52,7 +54,7 @@ export async function generateSessionAIReport(input: AIInput) {
               "Qué puede mejorar: 3 a 5 bullets accionables, priorizados, sin tecnicismo innecesario. " +
               "Sprint principal: un resumen del mejor sprint en lenguaje natural, no como tabla de claves y valores. " +
               "Calidad de la medición: explica si los datos parecen confiables y qué valores conviene leer con cautela. " +
-              "Recomendación práctica: 3 a 5 bullets de trabajo concreto para la siguiente sesión. " +
+              "Recomendación práctica: 3 a 5 bullets de trabajo concreto para la siguiente sesión, cerrando de forma directa y final. " +
               "El informe debe ayudar a que un corredor joven entienda cómo se desempeñó su cuerpo."
           }
         ]
