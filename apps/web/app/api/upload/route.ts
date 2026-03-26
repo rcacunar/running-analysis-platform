@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { enqueueAnalysis } from "@/lib/analysis-api";
 import { getServerEnv } from "@/lib/env";
+import { extractSessionCapture } from "@/lib/session-capture";
 
 export const runtime = "nodejs";
 
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
   const zipName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
   const storagePath = `${user.id}/${sessionId}/${zipName}`;
   const uploadBuffer = Buffer.from(await file.arrayBuffer());
+  const captureMeta = extractSessionCapture(file.name);
 
   const { error: insertError } = await admin.from("sessions").insert({
     id: sessionId,
@@ -40,7 +42,9 @@ export async function POST(request: Request) {
     status: "pending",
     upload_bucket: env.SESSION_ZIPS_BUCKET,
     upload_path: storagePath,
-    raw_zip_name: file.name
+    raw_zip_name: file.name,
+    captured_at_local: captureMeta.captured_at_local,
+    source_session_label: captureMeta.source_session_label
   });
 
   if (insertError) {

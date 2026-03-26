@@ -8,10 +8,16 @@ type SessionOption = {
   status: string;
 };
 
-export function CompareSelector({ sessions }: { sessions: SessionOption[] }) {
+export function CompareSelector({
+  sessions,
+  selectedIds
+}: {
+  sessions: SessionOption[];
+  selectedIds: string[];
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const selected = new Set((searchParams.get("ids") ?? "").split(",").filter(Boolean));
+  const selected = new Set(selectedIds);
 
   function toggleSession(id: string) {
     if (selected.has(id)) {
@@ -20,7 +26,15 @@ export function CompareSelector({ sessions }: { sessions: SessionOption[] }) {
       selected.add(id);
     }
     const ids = Array.from(selected).join(",");
-    router.replace(ids ? `/compare?ids=${ids}` : "/compare");
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("roadmap");
+    if (ids) {
+      params.set("ids", ids);
+    } else {
+      params.delete("ids");
+    }
+    const query = params.toString();
+    router.replace(query ? `/compare?${query}` : "/compare");
   }
 
   return (

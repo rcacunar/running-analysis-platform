@@ -6,11 +6,39 @@ export type SessionRow = {
   upload_bucket: string;
   upload_path: string;
   raw_zip_name: string | null;
+  captured_at_local: string | null;
+  source_session_label: string | null;
   created_at: string;
   updated_at: string;
   started_at: string | null;
   finished_at: string | null;
   error_message: string | null;
+};
+
+export type RoadmapRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  target_training_count: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RoadmapSessionRow = {
+  id: number;
+  roadmap_id: string;
+  session_id: string;
+  position: number;
+  added_at: string;
+};
+
+export type RoadmapAIReportRow = {
+  roadmap_id: string;
+  model: string;
+  report_text: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ProfileRow = {

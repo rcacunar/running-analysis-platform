@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import re
 import shutil
 import tempfile
 import zipfile
@@ -25,6 +26,10 @@ from analysis_service.services.session_store import (
 
 REQUIRED_FILES = {"Accelerometer.csv", "Gyroscope.csv"}
 INTEGER_ID_COLUMNS = {"sprint_id", "bout_id"}
+SESSION_CAPTURE_PATTERNS = [
+    re.compile(r"(20\d{2})-(\d{2})-(\d{2})[_ T](\d{2})-(\d{2})-(\d{2})"),
+    re.compile(r"(20\d{2})(\d{2})(\d{2})[_-](\d{2})(\d{2})(\d{2})"),
+]
 
 
 def detect_session_folder(root: Path) -> Path:
@@ -81,6 +86,22 @@ def _clean_summary(summary: dict) -> dict:
     return {key: _clean_value(value) for key, value in summary.items()}
 
 
+def extract_session_capture(label: str | None) -> dict:
+    if not label:
+        return {"captured_at_local": None, "source_session_label": None}
+    normalized = re.sub(r"\.[A-Za-z0-9]+$", "", label)
+    for pattern in SESSION_CAPTURE_PATTERNS:
+        match = pattern.search(normalized)
+        if not match:
+            continue
+        year, month, day, hour, minute, second = match.groups()
+        return {
+            "captured_at_local": f"{year}-{month}-{day}T{hour}:{minute}:{second}",
+            "source_session_label": normalized,
+        }
+    return {"captured_at_local": None, "source_session_label": normalized or None}
+
+
 def process_session(session_id: str) -> dict:
     session = fetch_session(session_id)
     now = datetime.now(timezone.utc).isoformat()
@@ -98,6 +119,7 @@ def process_session(session_id: str) -> dict:
             zf.extractall(extract_dir)
 
         session_folder = detect_session_folder(extract_dir)
+        capture_meta = extract_session_capture(session_folder.name)
         analysis = load_running_analysis(session_folder)
         export_dir = export_running_analysis(analysis, export_dir=workdir / "exports")
 
@@ -194,6 +216,8 @@ def process_session(session_id: str) -> dict:
             "completed",
             finished_at=datetime.now(timezone.utc).isoformat(),
             analysis_version="v1",
+            captured_at_local=capture_meta["captured_at_local"],
+            source_session_label=capture_meta["source_session_label"],
             error_message=None,
         )
         return {
