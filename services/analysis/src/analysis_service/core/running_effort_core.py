@@ -26,6 +26,84 @@ class RunningAnalysis:
     summary_table: pd.DataFrame
 
 
+SPRINT_COLUMNS = [
+    "sprint_id",
+    "bout_id",
+    "t_start_s",
+    "t_end_s",
+    "duration_s",
+    "distance_m",
+    "peak_speed_kmh",
+    "avg_speed_kmh",
+    "peak_effort",
+    "avg_effort",
+    "peak_cadence_spm",
+    "peak_impact_mps2",
+    "time_to_peak_speed_s",
+    "time_to_35pct_peak_s",
+    "time_to_50pct_peak_s",
+    "time_to_90pct_peak_s",
+    "launch_peak_accel_mps2",
+    "launch_mean_accel_mps2",
+    "launch_peak_jerk_mps3",
+    "plateau_duration_s",
+    "decel_duration_s",
+    "stop_duration_s",
+    "decel_peak_mps2",
+    "phase_sequence",
+]
+
+BOUT_COLUMNS = [
+    "bout_id",
+    "t_start_s",
+    "t_end_s",
+    "duration_s",
+    "distance_m",
+    "peak_speed_kmh",
+    "avg_speed_kmh",
+    "peak_effort",
+    "avg_effort",
+    "time_to_35pct_peak_s",
+    "time_to_50pct_peak_s",
+    "time_to_90pct_peak_s",
+    "launch_peak_accel_mps2",
+    "launch_mean_accel_mps2",
+    "launch_peak_jerk_mps3",
+    "plateau_duration_s",
+    "decel_duration_s",
+    "stop_duration_s",
+    "decel_peak_mps2",
+    "phase_sequence",
+]
+
+PHASE_COLUMNS = [
+    "bout_id",
+    "sprint_id",
+    "phase",
+    "t_start_s",
+    "t_end_s",
+    "duration_s",
+    "distance_m",
+    "mean_speed_kmh",
+    "peak_speed_kmh",
+    "mean_effort",
+    "peak_effort",
+    "mean_accel_mps2",
+    "peak_accel_mps2",
+    "min_accel_mps2",
+    "peak_jerk_mps3",
+]
+
+
+def ensure_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    if df.empty and not len(df.columns):
+        return pd.DataFrame(columns=columns)
+    missing = [column for column in columns if column not in df.columns]
+    for column in missing:
+        df[column] = np.nan
+    return df[columns + [column for column in df.columns if column not in columns]]
+
+
 def robust_z(values: Iterable[float]) -> np.ndarray:
     arr = np.asarray(list(values), dtype=float)
     med = np.nanmedian(arr)
@@ -412,7 +490,7 @@ def compute_features(
 
 def detect_sprints(features: pd.DataFrame, min_duration_s: float = 2.0) -> tuple[pd.DataFrame, pd.DataFrame]:
     if features.empty:
-        return features.copy(), pd.DataFrame()
+        return features.copy(), pd.DataFrame(columns=SPRINT_COLUMNS)
 
     features = features.copy()
     if features["speed_smooth_mps"].notna().any():
@@ -455,13 +533,13 @@ def detect_sprints(features: pd.DataFrame, min_duration_s: float = 2.0) -> tuple
             }
         )
 
-    sprints = pd.DataFrame(sprint_rows)
+    sprints = ensure_columns(pd.DataFrame(sprint_rows), SPRINT_COLUMNS)
     return features, sprints
 
 
 def detect_bouts(features: pd.DataFrame, min_duration_s: float = 3.0) -> tuple[pd.DataFrame, pd.DataFrame]:
     if features.empty:
-        return features.copy(), pd.DataFrame()
+        return features.copy(), pd.DataFrame(columns=BOUT_COLUMNS)
 
     features = features.copy()
     speed_ref = features["speed_phase_mps"].fillna(0.0)
@@ -497,7 +575,7 @@ def detect_bouts(features: pd.DataFrame, min_duration_s: float = 3.0) -> tuple[p
                 "avg_effort": float(sub["effort_score"].mean()),
             }
         )
-    return features, pd.DataFrame(bouts)
+    return features, ensure_columns(pd.DataFrame(bouts), BOUT_COLUMNS)
 
 
 def detect_phases(features: pd.DataFrame, bouts: pd.DataFrame, sprints: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -674,7 +752,8 @@ def detect_phases(features: pd.DataFrame, bouts: pd.DataFrame, sprints: pd.DataF
             sprints.loc[sprints["sprint_id"] == sprint_id, "decel_peak_mps2"] = decel_peak
             sprints.loc[sprints["sprint_id"] == sprint_id, "phase_sequence"] = " > ".join(phase_order)
 
-    phases = pd.DataFrame(phase_rows)
+    phases = ensure_columns(pd.DataFrame(phase_rows), PHASE_COLUMNS)
+    sprints = ensure_columns(sprints, SPRINT_COLUMNS)
     return features, phases, sprints
 
 
@@ -694,6 +773,9 @@ def build_summary(
     phases: pd.DataFrame,
     sprints: pd.DataFrame,
 ) -> tuple[dict, pd.DataFrame]:
+    bouts = ensure_columns(bouts.copy(), BOUT_COLUMNS)
+    phases = ensure_columns(phases.copy(), PHASE_COLUMNS)
+    sprints = ensure_columns(sprints.copy(), SPRINT_COLUMNS)
     duration_s = float(motion["seconds_elapsed"].iloc[-1] - motion["seconds_elapsed"].iloc[0])
     distance_m = float(location["gps_distance_m"].iloc[-1]) if not location.empty else np.nan
     moving_time_s = (
