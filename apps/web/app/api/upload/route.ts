@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { enqueueAnalysis } from "@/lib/analysis-api";
 import { getServerEnv } from "@/lib/env";
 import { extractSessionCapture } from "@/lib/session-capture";
+import { sessionContextSchema } from "@/lib/session-context";
 
 export const runtime = "nodejs";
 
@@ -22,11 +23,19 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get("file");
   const name = String(formData.get("name") ?? "").trim();
+  const contextParsed = sessionContextSchema.safeParse({
+    intended_activity: formData.get("intended_activity"),
+    added_load_kg: formData.get("added_load_kg"),
+    session_notes: formData.get("session_notes")
+  });
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Falta el ZIP" }, { status: 400 });
   }
   if (!file.name.toLowerCase().endsWith(".zip")) {
     return NextResponse.json({ error: "Solo se aceptan archivos ZIP" }, { status: 400 });
+  }
+  if (!contextParsed.success) {
+    return NextResponse.json({ error: "Contexto de sesión inválido" }, { status: 400 });
   }
 
   const sessionId = randomUUID();
@@ -43,6 +52,9 @@ export async function POST(request: Request) {
     upload_bucket: env.SESSION_ZIPS_BUCKET,
     upload_path: storagePath,
     raw_zip_name: file.name,
+    intended_activity: contextParsed.data.intended_activity,
+    added_load_kg: contextParsed.data.added_load_kg,
+    session_notes: contextParsed.data.session_notes,
     captured_at_local: captureMeta.captured_at_local,
     source_session_label: captureMeta.source_session_label
   });

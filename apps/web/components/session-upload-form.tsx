@@ -36,6 +36,29 @@ export function SessionUploadForm() {
           <input name="name" type="text" placeholder="Pique 30m - martes AM" />
         </label>
         <label className="field">
+          <span>Actividad esperada</span>
+          <select name="intended_activity" defaultValue="">
+            <option value="">Detectar automáticamente</option>
+            <option value="caminata_intensa">Caminata intensa</option>
+            <option value="trote">Trote</option>
+            <option value="corrida">Corrida</option>
+            <option value="pique">Pique / sprint</option>
+            <option value="mixto">Mixto</option>
+          </select>
+        </label>
+        <label className="field">
+          <span>Carga adicional (kg)</span>
+          <input name="added_load_kg" type="number" min="0" step="0.1" placeholder="Ej: 40" />
+        </label>
+        <label className="field">
+          <span>Notas de la sesión</span>
+          <textarea
+            name="session_notes"
+            rows={3}
+            placeholder="Ej: trote con 40 kg, bolsillo derecho, terreno plano, sesión de resistencia"
+          />
+        </label>
+        <label className="field">
           <span>ZIP exportado por Sensor Logger</span>
           <input name="file" type="file" accept=".zip,application/zip" required />
         </label>

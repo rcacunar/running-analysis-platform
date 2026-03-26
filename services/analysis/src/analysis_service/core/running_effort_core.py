@@ -765,6 +765,72 @@ def rolling_best_speed(location: pd.DataFrame, window_s: int) -> float:
     return float(location["speed_smooth_mps"].rolling(window, min_periods=1).mean().max() * 3.6)
 
 
+def summarize_activity_modes(location: pd.DataFrame) -> dict:
+    if location.empty or "speed_smooth_mps" not in location.columns or "dt" not in location.columns:
+        return {
+            "detected_activity": None,
+            "dominant_activity": None,
+            "intense_walk_time_s": np.nan,
+            "jog_time_s": np.nan,
+            "run_time_s": np.nan,
+            "sprint_time_s": np.nan,
+            "intense_walk_share": np.nan,
+            "jog_share": np.nan,
+            "run_share": np.nan,
+            "sprint_share": np.nan,
+        }
+
+    speeds = location["speed_smooth_mps"].fillna(0.0)
+    dt = location["dt"].fillna(0.0).clip(lower=0.0)
+    active_time = float(dt.where(speeds >= 1.0, 0.0).sum())
+    if active_time <= 0:
+        return {
+            "detected_activity": "reposo",
+            "dominant_activity": "reposo",
+            "intense_walk_time_s": 0.0,
+            "jog_time_s": 0.0,
+            "run_time_s": 0.0,
+            "sprint_time_s": 0.0,
+            "intense_walk_share": 0.0,
+            "jog_share": 0.0,
+            "run_share": 0.0,
+            "sprint_share": 0.0,
+        }
+
+    zone_times = {
+        "caminata_intensa": float(dt.where((speeds >= 1.5) & (speeds < 2.4), 0.0).sum()),
+        "trote": float(dt.where((speeds >= 2.4) & (speeds < 3.6), 0.0).sum()),
+        "corrida": float(dt.where((speeds >= 3.6) & (speeds < 5.8), 0.0).sum()),
+        "pique": float(dt.where(speeds >= 5.8, 0.0).sum()),
+    }
+    shares = {key: value / active_time if active_time > 0 else 0.0 for key, value in zone_times.items()}
+    dominant_activity = max(zone_times.items(), key=lambda item: item[1])[0] if any(zone_times.values()) else "movimiento_general"
+
+    if zone_times["pique"] >= max(2.0, active_time * 0.08):
+        detected_activity = "pique"
+    elif zone_times["corrida"] >= max(8.0, active_time * 0.25):
+        detected_activity = "corrida"
+    elif zone_times["trote"] >= max(8.0, active_time * 0.25):
+        detected_activity = "trote"
+    elif zone_times["caminata_intensa"] >= max(8.0, active_time * 0.35):
+        detected_activity = "caminata_intensa"
+    else:
+        detected_activity = "mixto"
+
+    return {
+        "detected_activity": detected_activity,
+        "dominant_activity": dominant_activity,
+        "intense_walk_time_s": zone_times["caminata_intensa"],
+        "jog_time_s": zone_times["trote"],
+        "run_time_s": zone_times["corrida"],
+        "sprint_time_s": zone_times["pique"],
+        "intense_walk_share": shares["caminata_intensa"],
+        "jog_share": shares["trote"],
+        "run_share": shares["corrida"],
+        "sprint_share": shares["pique"],
+    }
+
+
 def build_summary(
     motion: pd.DataFrame,
     location: pd.DataFrame,
@@ -786,6 +852,7 @@ def build_summary(
         moving_distance = float((location["speed_smooth_mps"] * location["dt"]).where(location["speed_smooth_mps"] >= 1.0).sum())
         moving_avg_kmh = 3.6 * moving_distance / moving_time_s
 
+    activity_summary = summarize_activity_modes(location)
     best_sprint = sprints.sort_values(["peak_speed_kmh", "peak_effort"], ascending=False).head(1)
     summary = {
         "duration_s": duration_s,
@@ -805,6 +872,16 @@ def build_summary(
         "n_bouts": int(len(bouts)),
         "n_phases": int(len(phases)),
         "n_sprints": int(len(sprints)),
+        "detected_activity": activity_summary["detected_activity"],
+        "dominant_activity": activity_summary["dominant_activity"],
+        "intense_walk_time_s": activity_summary["intense_walk_time_s"],
+        "jog_time_s": activity_summary["jog_time_s"],
+        "run_time_s": activity_summary["run_time_s"],
+        "sprint_time_s": activity_summary["sprint_time_s"],
+        "intense_walk_share": activity_summary["intense_walk_share"],
+        "jog_share": activity_summary["jog_share"],
+        "run_share": activity_summary["run_share"],
+        "sprint_share": activity_summary["sprint_share"],
     }
     if not best_sprint.empty:
         row = best_sprint.iloc[0]
@@ -840,6 +917,12 @@ def build_summary(
         ("Tiempo en movimiento", summary["moving_time_s"], "s"),
         ("Velocidad media en movimiento", summary["moving_avg_speed_kmh"], "km/h"),
         ("Velocidad pico", summary["peak_speed_kmh"], "km/h"),
+        ("Actividad detectada", summary["detected_activity"], ""),
+        ("Actividad dominante", summary["dominant_activity"], ""),
+        ("Tiempo caminata intensa", summary["intense_walk_time_s"], "s"),
+        ("Tiempo trote", summary["jog_time_s"], "s"),
+        ("Tiempo corrida", summary["run_time_s"], "s"),
+        ("Tiempo pique", summary["sprint_time_s"], "s"),
         ("Mejor media 3 s", summary["best_3s_speed_kmh"], "km/h"),
         ("Mejor media 5 s", summary["best_5s_speed_kmh"], "km/h"),
         ("Pico de esfuerzo", summary["peak_effort_score"], "/100"),

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { sessionContextSchema } from "@/lib/session-context";
 
 export const runtime = "nodejs";
 
@@ -84,4 +85,33 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     updated_at: session.updated_at ?? null,
     finished_at: session.finished_at ?? null
   });
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const owned = await getOwnedSession(id);
+  if ("error" in owned) {
+    return owned.error;
+  }
+
+  const body = await request.json().catch(() => null);
+  const parsed = sessionContextSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Contexto de sesión inválido" }, { status: 400 });
+  }
+
+  const { admin, session } = owned;
+  const { data, error } = await admin
+    .from("sessions")
+    .update(parsed.data)
+    .eq("id", id)
+    .eq("user_id", session.user_id)
+    .select("id,intended_activity,added_load_kg,session_notes")
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  return NextResponse.json({ session: data });
 }

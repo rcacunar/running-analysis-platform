@@ -37,7 +37,12 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
 
   const [{ data: session }, { data: summary }, { data: sprints }, { data: phases }, { data: featurePoints }, { data: profile }] =
     await Promise.all([
-      admin.from("sessions").select("id,name,user_id,status").eq("id", id).eq("user_id", user.id).maybeSingle(),
+      admin
+        .from("sessions")
+        .select("id,name,user_id,status,intended_activity,added_load_kg,session_notes,captured_at_local")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .maybeSingle(),
       admin.from("session_summaries").select("*").eq("session_id", id).maybeSingle(),
       admin.from("session_sprints").select("*").eq("session_id", id).order("t_start_s"),
       admin.from("session_phases").select("*").eq("session_id", id).order("t_start_s"),
@@ -105,6 +110,12 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
     const { model, reportText } = await generateSessionAIReport({
       sessionName: session.name,
       athleteProfile,
+      sessionContext: {
+        intended_activity: session.intended_activity,
+        added_load_kg: session.added_load_kg,
+        session_notes: session.session_notes,
+        captured_at_local: session.captured_at_local
+      },
       summary,
       sprints: (sprints ?? []).slice(0, 5),
       phases: (phases ?? []).slice(0, 12),

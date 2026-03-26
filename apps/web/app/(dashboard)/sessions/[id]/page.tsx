@@ -5,6 +5,7 @@ import { fmt, statusLabel } from "@/lib/format";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { SessionActionButtons } from "@/components/session-action-buttons";
 import { SessionAIReport } from "@/components/session-ai-report";
+import { SessionContextForm } from "@/components/session-context-form";
 import { SessionStatusWatcher } from "@/components/session-status-watcher";
 import { SessionVisuals } from "@/components/session-visuals";
 import { isSessionAIEnabled } from "@/lib/session-ai";
@@ -88,6 +89,22 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         </div>
         <div className="metric-grid" style={{ marginTop: 18 }}>
           <article className="metric-card">
+            <span>Actividad detectada</span>
+            <strong>{summary?.detected_activity ?? "n/d"}</strong>
+          </article>
+          <article className="metric-card">
+            <span>Actividad dominante</span>
+            <strong>{summary?.dominant_activity ?? "n/d"}</strong>
+          </article>
+          <article className="metric-card">
+            <span>Actividad esperada</span>
+            <strong>{session.intended_activity ?? "auto"}</strong>
+          </article>
+          <article className="metric-card">
+            <span>Carga adicional</span>
+            <strong>{session.added_load_kg == null ? "0 kg" : `${fmt(session.added_load_kg)} kg`}</strong>
+          </article>
+          <article className="metric-card">
             <span>Mejor 3s</span>
             <strong>{fmt(summary?.best_3s_speed_kmh)} km/h</strong>
           </article>
@@ -145,6 +162,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
 
       {session.status === "completed" ? (
         <>
+          <SessionContextForm session={session as any} />
           <SessionAIReport
             sessionId={session.id}
             aiEnabled={aiEnabled}

@@ -6,6 +6,9 @@ export type SessionRow = {
   upload_bucket: string;
   upload_path: string;
   raw_zip_name: string | null;
+  intended_activity: string | null;
+  added_load_kg: number | null;
+  session_notes: string | null;
   captured_at_local: string | null;
   source_session_label: string | null;
   created_at: string;
@@ -63,6 +66,16 @@ export type SummaryRow = {
   peak_speed_kmh: number | null;
   best_3s_speed_kmh: number | null;
   peak_effort_score: number | null;
+  detected_activity: string | null;
+  dominant_activity: string | null;
+  intense_walk_time_s: number | null;
+  jog_time_s: number | null;
+  run_time_s: number | null;
+  sprint_time_s: number | null;
+  intense_walk_share: number | null;
+  jog_share: number | null;
+  run_share: number | null;
+  sprint_share: number | null;
   best_sprint_launch_peak_accel_mps2: number | null;
   best_sprint_time_to_50pct_peak_s: number | null;
   best_sprint_time_to_90pct_peak_s: number | null;

@@ -3,6 +3,7 @@ import OpenAI from "openai";
 type AIInput = {
   sessionName: string;
   athleteProfile: Record<string, unknown> | null;
+  sessionContext: Record<string, unknown> | null;
   summary: Record<string, unknown>;
   sprints: Array<Record<string, unknown>>;
   phases: Array<Record<string, unknown>>;
@@ -41,6 +42,8 @@ export async function generateSessionAIReport(input: AIInput) {
               "Responde en español claro, humano y directo, con tono de coach técnico, no de paper ni de dashboard. " +
               "Usa solo los datos entregados. No inventes mediciones, no inventes antecedentes clínicos y no cites estudios. " +
               "Si existe un perfil del atleta, úsalo para dar contexto al análisis y a las recomendaciones, pero no hagas diagnóstico médico ni afirmaciones clínicas. " +
+              "Si existe contexto de la sesión, como actividad esperada o carga adicional, úsalo para interpretar el esfuerzo real de ese entrenamiento. " +
+              "La sesión puede ser caminata intensa, trote, corrida, pique o mixta; no asumas que siempre es sprint. " +
               "Si faltan datos del perfil, continúa igual sin inventarlos y sin exagerar su importancia. " +
               "No escribas nombres internos de variables, no uses snake_case, no pegues claves del JSON y no llenes el texto con decimales innecesarios. " +
               "Redondea casi todos los valores a 1 decimal; usa más precisión solo si cambia de verdad la interpretación. " +
@@ -55,7 +58,7 @@ export async function generateSessionAIReport(input: AIInput) {
               "Qué destaca: 3 a 5 bullets sobre fortalezas, cada uno explicando por qué importa. " +
               "Lo que muestra tu cuerpo: 3 a 5 bullets que traduzcan aceleración, meseta, desaceleración, cadencia, impacto o esfuerzo a sensaciones y comportamiento del corredor. " +
               "Qué puede mejorar: 3 a 5 bullets accionables, priorizados, sin tecnicismo innecesario. " +
-              "Sprint principal: un resumen del mejor sprint en lenguaje natural, no como tabla de claves y valores. " +
+              "Esfuerzo principal: un resumen del tramo o bloque más representativo en lenguaje natural, no como tabla de claves y valores. " +
               "Calidad de la medición: explica si los datos parecen confiables y qué valores conviene leer con cautela. " +
               "Recomendación práctica: 3 a 5 bullets de trabajo concreto para la siguiente sesión, cerrando de forma directa y final. " +
               "El informe debe ayudar a que un corredor joven entienda cómo se desempeñó su cuerpo."
