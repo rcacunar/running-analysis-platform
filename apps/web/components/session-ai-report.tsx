@@ -37,7 +37,7 @@ export function SessionAIReport({
   return (
     <section className="surface card">
       <p className="eyebrow">Análisis IA</p>
-      <h2 style={{ marginBottom: 12 }}>Lectura de rendimiento para el atleta</h2>
+      <h2 style={{ marginBottom: 12 }}>Lectura de rendimiento</h2>
       {aiEnabled ? (
         <>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
