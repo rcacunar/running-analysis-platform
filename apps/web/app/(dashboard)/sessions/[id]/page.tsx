@@ -4,8 +4,10 @@ import { requireUser } from "@/lib/auth";
 import { fmt, statusLabel } from "@/lib/format";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { SessionActionButtons } from "@/components/session-action-buttons";
+import { SessionAIReport } from "@/components/session-ai-report";
 import { SessionStatusWatcher } from "@/components/session-status-watcher";
 import { SessionVisuals } from "@/components/session-visuals";
+import { isSessionAIEnabled } from "@/lib/session-ai";
 
 const EXPORT_META: Record<string, { label: string; description: string }> = {
   summary: { label: "Resumen CSV", description: "Métricas globales de la sesión" },
@@ -21,8 +23,9 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const { supabase, user } = await requireUser();
   const admin = createSupabaseAdminClient();
+  const aiEnabled = isSessionAIEnabled();
 
-  const [{ data: session }, { data: summary }, { data: sprints }, { data: phases }, { data: playback }, { data: features }, { data: exports }] =
+  const [{ data: session }, { data: summary }, { data: sprints }, { data: phases }, { data: playback }, { data: features }, { data: exports }, { data: aiReport }] =
     await Promise.all([
       supabase.from("sessions").select("*").eq("id", id).eq("user_id", user.id).maybeSingle(),
       supabase.from("session_summaries").select("*").eq("session_id", id).maybeSingle(),
@@ -30,7 +33,8 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
       supabase.from("session_phases").select("*").eq("session_id", id).order("t_start_s"),
       supabase.from("session_playback_points").select("*").eq("session_id", id).order("t_center"),
       supabase.from("session_feature_points").select("*").eq("session_id", id).order("t_center"),
-      supabase.from("session_exports").select("*").eq("session_id", id).order("kind")
+      supabase.from("session_exports").select("*").eq("session_id", id).order("kind"),
+      supabase.from("session_ai_reports").select("*").eq("session_id", id).maybeSingle()
     ]);
 
   if (!session) {
@@ -141,6 +145,12 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
 
       {session.status === "completed" ? (
         <>
+          <SessionAIReport
+            sessionId={session.id}
+            aiEnabled={aiEnabled}
+            initialReportText={aiReport?.report_text ?? null}
+            initialModel={aiReport?.model ?? null}
+          />
           <SessionVisuals
             features={(features ?? []) as any[]}
             playback={(playback ?? []) as any[]}

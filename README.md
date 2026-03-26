@@ -37,6 +37,8 @@ Todas las tablas sensibles usan `RLS` por `user_id`.
 1. Copia `.env.example` a `.env` y completa tus claves de Supabase.
 2. Aplica la migración SQL en tu instancia Supabase:
    - `supabase/migrations/20260325_001_running_analysis.sql`
+   - `supabase/migrations/20260325_002_feature_series_expansion.sql`
+   - `supabase/migrations/20260325_003_session_ai_reports.sql`
 3. Levanta la app:
 
 ```bash
@@ -57,3 +59,4 @@ docker compose up --build
 - El motor de análisis reutiliza el core Python ya construido y no necesita migrar a TypeScript.
 - Los buckets esperados son `session-zips` y `session-exports`.
 - Si quieres descargas firmadas en vez de acceso directo a Storage, ese ajuste se hace en Next.js sin tocar el worker.
+- Si quieres análisis IA por sesión, define `OPENAI_API_KEY` y opcionalmente `OPENAI_MODEL` en el servicio `web`.
