@@ -37,7 +37,7 @@ export function SessionAIReport({
   return (
     <section className="surface card">
       <p className="eyebrow">Análisis IA</p>
-      <h2 style={{ marginBottom: 12 }}>Lectura interpretativa de la sesión</h2>
+      <h2 style={{ marginBottom: 12 }}>Lectura de rendimiento para el atleta</h2>
       {aiEnabled ? (
         <>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
@@ -53,7 +53,7 @@ export function SessionAIReport({
             </div>
           ) : (
             <p className="muted">
-              Genera un informe en lenguaje natural con contexto técnico, fortalezas, cautelas de medición y foco de mejora.
+              Genera un informe en lenguaje claro para el corredor: qué hizo bien, qué muestra su cuerpo, qué datos mirar con cautela y qué conviene entrenar.
             </p>
           )}
         </>
