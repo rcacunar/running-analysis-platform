@@ -41,16 +41,28 @@ export function SessionAIReport({
       {aiEnabled ? (
         <>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
-            <button type="button" className="button-secondary" disabled={pending} onClick={generate}>
-              {pending ? "Generando..." : reportText ? "Regenerar análisis IA" : "Generar análisis IA"}
-            </button>
+            {reportText ? (
+              <button type="button" className="button-secondary" disabled={pending} onClick={generate}>
+                {pending ? "Regenerando..." : "Regenerar análisis IA"}
+              </button>
+            ) : (
+              <button type="button" className="button-secondary" disabled={pending} onClick={generate}>
+                {pending ? "Generando..." : "Generar análisis IA"}
+              </button>
+            )}
             {model ? <span className="muted">Modelo: {model}</span> : null}
           </div>
           {error ? <div className="notice notice-error">{error}</div> : null}
           {reportText ? (
-            <div className="ai-report-block">
-              <pre>{reportText}</pre>
-            </div>
+            <>
+              <p className="muted" style={{ marginBottom: 12 }}>
+                Puedes regenerar este análisis para volver a interpretarlo con la versión actual del asistente. El nuevo
+                informe reemplaza al anterior solo para esta sesión.
+              </p>
+              <div className="ai-report-block">
+                <pre>{reportText}</pre>
+              </div>
+            </>
           ) : (
             <p className="muted">
               Genera un informe en lenguaje claro para el corredor: qué hizo bien, qué muestra su cuerpo, qué datos mirar con cautela y qué conviene entrenar.
